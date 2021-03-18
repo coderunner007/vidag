@@ -1,0 +1,27 @@
+{
+  "name": "facetsvisualized",
+  "version": "1.0.0",
+  "description": "A tool to visualize Cart facets and their dependencies",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "webpack serve --open",
+    "build": "webpack",
+    "clean": "rm -rf ./node_modules"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "d3": "^6.6.0"
+  },
+  "devDependencies": {
+    "css-loader": "^5.1.3",
+    "html-webpack-plugin": "^5.3.1",
+    "node-sass": "^5.0.0",
+    "sass-loader": "^11.0.1",
+    "style-loader": "^2.0.0",
+    "webpack": "^5.26.3",
+    "webpack-cli": "^4.5.0",
+    "webpack-dev-server": "^3.11.2"
+  }
+}
