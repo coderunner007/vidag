@@ -278,39 +278,6 @@ document.onload = (function(d3, saveAs, Blob, undefined){
     thisGraph.state.selectedEdge = null;
   };
 
-  GraphCreator.prototype.pathMouseDown = function(d3path, d){
-    var thisGraph = this,
-        state = thisGraph.state;
-    d3.event.stopPropagation();
-    state.mouseDownLink = d;
-
-    if (state.selectedNode){
-      thisGraph.removeSelectFromNode();
-    }
-
-    var prevEdge = state.selectedEdge;
-    if (!prevEdge || prevEdge !== d){
-      thisGraph.replaceSelectEdge(d3path, d);
-    } else{
-      thisGraph.removeSelectFromEdge();
-    }
-  };
-
-  // mousedown on node
-  GraphCreator.prototype.circleMouseDown = function(d3node, d){
-    var thisGraph = this,
-        state = thisGraph.state;
-    d3.event.stopPropagation();
-    state.mouseDownNode = d;
-    if (d3.event.shiftKey){
-      state.shiftNodeDrag = d3.event.shiftKey;
-      // reposition dragged directed edge
-      thisGraph.dragLine.classed('hidden', false)
-        .attr('d', 'M' + d.x + ',' + d.y + 'L' + d.x + ',' + d.y);
-      return;
-    }
-  };
-
   /* place editable text on node in place of svg text */
   GraphCreator.prototype.changeTextOfNode = function(d3node, d){
     var thisGraph= this,
@@ -506,10 +473,6 @@ document.onload = (function(d3, saveAs, Blob, undefined){
       .attr("d", function(d){
         return "M" + d.source.x + "," + d.source.y + "L" + d.target.x + "," + d.target.y;
       })
-      .on("mousedown", function(d){
-        thisGraph.pathMouseDown.call(thisGraph, d3.select(this), d);
-        }
-      )
       .on("mouseup", function(d){
         state.mouseDownLink = null;
       });
@@ -534,9 +497,6 @@ document.onload = (function(d3, saveAs, Blob, undefined){
       })
       .on("mouseout", function(d){
         d3.select(this).classed(consts.connectClass, false);
-      })
-      .on("mousedown", function(d){
-        thisGraph.circleMouseDown.call(thisGraph, d3.select(this), d);
       })
       .on("mouseup", function(d){
         thisGraph.circleMouseUp.call(thisGraph, d3.select(this), d);

@@ -12,7 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "d3": "^6.6.0"
+    "d3": "3.5.17"
   },
   "devDependencies": {
     "css-loader": "^5.1.3",
