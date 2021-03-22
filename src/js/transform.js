@@ -1,24 +1,28 @@
-var data = {
-  edges: [ 
-    { source: "val", target: "val2" },
-    { source: "val", target: "val3" },
-  ],
-  nodes: [ "val", "val2", "val3" ]
-};
-
-var nodes = [
-  {title: "new concept0", id: 0, x: xLoc, y: yLoc},
-  {title: "new concept1", id: 1, x: xLoc, y: yLoc + 200},
-  {title: "new concept2", id: 2, x: xLoc + 200, y: yLoc},
-  {title: "new concept3", id: 3, x: xLoc - 200, y: yLoc}
-];
-var edges = [
-  {source: nodes[1], target: nodes[0]},
-  {source: nodes[2], target: nodes[0]},
-  {source: nodes[2], target: nodes[3]},
-  {source: nodes[1], target: nodes[2]},
-  {source: nodes[1], target: nodes[3]}
-];
+// Functions to transfrom the data
+// to the expected graph input.
+//
+//
+// FROM:
+// {
+//   edges: [ 
+//     { source: "val", target: "val2" },
+//     { source: "val", target: "val3" },
+//   ],
+//   nodes: [ "val", "val2", "val3" ]
+// };
+//
+// TO:
+// {
+//   edges: [
+//     {title: "val", id: 0, x: xLoc, y: yLoc},
+//     {title: "val2", id: 1, x: xLoc, y: yLoc + 200},
+//     {title: "val3", id: 2, x: xLoc + 200, y: yLoc},
+//   ],
+//   nodes: [
+//     {source: nodes[0], target: nodes[1]},
+//     {source: nodes[0], target: nodes[2]},
+//   ]
+// }
 
 
 const toGraphInput = (data) => {
@@ -26,8 +30,25 @@ const toGraphInput = (data) => {
     return {};
   }
   
-  let crudeNodes = data.nodes;
-  let crudeEdges = data.edges;
+  let outEdgesFromNodeCount = data.edges.reduce((acc, edge) => {
+    acc[edge.source] =  (acc[edge.source] || 0) + 1;
 
-  crudeNodes.map(node)
+    return acc;
+  }, {});
+
+  let nodes = data.nodes
+    .map(
+      (name, index) => ({
+        title: name,
+        id: index,
+        count: (outEdgesFromNodeCount[name] || 0)
+      })
+    )
+    .sort(
+      (firstNode, secondNode) => secondNode.count - firstNode.count
+    );
+
+  return nodes;
 };
+
+export { toGraphInput };

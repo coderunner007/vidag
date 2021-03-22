@@ -377,4 +377,12 @@ GraphCreator.prototype.zoomed = function(){
     .attr("transform", "translate(" + d3.event.translate + ") scale(" + d3.event.scale + ")");
 };
 
+GraphCreator.prototype.updateWindow = function(svg){
+  var docEl = document.documentElement,
+    bodyEl = document.getElementsByTagName('body')[0];
+  var x = window.innerWidth || docEl.clientWidth || bodyEl.clientWidth;
+  var y = window.innerHeight|| docEl.clientHeight|| bodyEl.clientHeight;
+  svg.attr("width", x).attr("height", y);
+};
+
 export { GraphCreator };

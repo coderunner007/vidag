@@ -1,5 +1,6 @@
 import { GraphCreator } from "./js/directedGraph.js";
 import { fetchData } from "./js/api.js";
+import { toGraphInput } from "./js/transform.js";
 
 function init() {
   "use strict";
@@ -27,6 +28,7 @@ function init() {
   {source: nodes[1], target: nodes[2]},
   {source: nodes[1], target: nodes[3]}
 ];
+  console.log(toGraphInput(fetchData()));
 
 
   /** MAIN SVG **/
