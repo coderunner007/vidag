@@ -4,7 +4,7 @@
 //
 // FROM:
 // {
-//   edges: [ 
+//   edges: [
 //     { source: "val", target: "val2" },
 //     { source: "val", target: "val3" },
 //   ],
@@ -74,24 +74,51 @@ const toGraphNodes = (data) => {
 
     return acc;
   }, {});
-  let center = getGraphCenter();
+  let nodesGroupedBySourceNode = data.edges.reduce((acc, edge) => {
+    acc[edge.source] = acc[edge.source]
+      ? [ ...acc[edge.source], edge.target ]
+      : [edge.target]
 
-  return data.nodes
-    .map(
-      (name, index) => ({
-        id: name,
-        group: 1,
-        count: (outEdgesFromNodeCount[name] || 0)
-      })
-    )
-  // .sort((firstNode, secondNode) => secondNode.count - firstNode.count)
-    // .map(
-    //   (graphNode, index) => ({
-    //     ...graphNode,
-    //     x: center.x + getGraphNodeX(graphNode, index),
-    //     y: center.y + getGraphNodeY(graphNode, index)
-    //   })
-    // );
+    return acc;
+  }, {});
+
+  let nodesMap = data.nodes
+    .reduce(
+      (acc, name, index) => {
+        acc[name] = {
+          id: name,
+          group: 20,
+          count: (outEdgesFromNodeCount[name] || 0)
+        };
+
+        return acc;
+      },
+      {}
+    );
+
+  let allNodesSingleGroup = Object.values(nodesMap).sort(
+    (firstNode, secondNode) => secondNode.count - firstNode.count
+  );
+
+  const totalGroups = 15;
+  for (let i = 0; i < totalGroups; i++) {
+    let sourceNode = allNodesSingleGroup[i];
+    nodesMap[sourceNode.id] = {
+      ...nodesMap[sourceNode.id],
+      group: i + 1
+    };
+
+    let allTargetNodesFromThisSource = nodesGroupedBySourceNode[sourceNode.id];
+    for (let i = 0; i < allTargetNodesFromThisSource.length; i++) {
+      let targetNode = allTargetNodesFromThisSource[i];
+      nodesMap[targetNode.id] = {
+        ...nodesMap[targetNode.id],
+        group: i + 1
+      };
+    }
+  }
+
+  return Object.values(nodesMap);
 };
 
 const getGraphNodesIndexMap = (graphNodes) => {

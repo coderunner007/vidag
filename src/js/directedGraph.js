@@ -1,15 +1,24 @@
 import * as d3 from "d3";
 import '../css/style.scss';
 
+const winWidth = 2000; // window.innerWidth;
+const winHeight = 2000; // window.innerHeight;
+
+const svgEl = document.getElementsByTagName("svg")[0];
+svgEl.setAttribute("width",  winWidth);
+svgEl.setAttribute("height", winHeight);
+
 var svg = d3.select("svg"),
-    width = +svg.attr("width"),
-    height = +svg.attr("height");
+  width = winWidth,
+    height = winHeight;
 
 var color = d3.scaleOrdinal(d3.schemeCategory20);
 
+var charge_force = d3.forceManyBody().strength(-20).distanceMax(200);
+
 var simulation = d3.forceSimulation()
     .force("link", d3.forceLink().id(function(d) { return d.id; }))
-    .force("charge", d3.forceManyBody())
+    .force("charge", charge_force)
     .force("center", d3.forceCenter(width / 2, height / 2));
 
 function init(graph) {
@@ -25,7 +34,7 @@ function init(graph) {
     .selectAll("g")
     .data(graph.nodes)
     .enter().append("g")
-    
+
   var circles = node.append("circle")
       .attr("r", 5)
       .attr("fill", function(d) { return color(d.group); })
@@ -50,6 +59,11 @@ function init(graph) {
 
   simulation.force("link")
       .links(graph.links);
+
+  var zoom_handler = d3.zoom()
+    .on("zoom", zoom_actions);
+
+  zoom_handler(svg);
 
   function ticked() {
     link
