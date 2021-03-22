@@ -25,18 +25,27 @@
 // }
 
 
-const toGraphInput = (data) => {
-  if (!data || !data.edges || !data.nodes) {
-    return {};
-  }
-  
+const getGraphCenter = () => {
+  var docEl = document.documentElement,
+    bodyEl = document.getElementsByTagName('body')[0];
+
+  var width = window.innerWidth || docEl.clientWidth || bodyEl.clientWidth,
+    height =  window.innerHeight|| docEl.clientHeight|| bodyEl.clientHeight;
+
+  return {
+    x: width/2 - 25,
+    y: height/2 - 25
+  };
+};
+
+const toGraphNodes = (data) => {
   let outEdgesFromNodeCount = data.edges.reduce((acc, edge) => {
     acc[edge.source] =  (acc[edge.source] || 0) + 1;
 
     return acc;
   }, {});
 
-  let nodes = data.nodes
+  return data.nodes
     .map(
       (name, index) => ({
         title: name,
@@ -47,8 +56,40 @@ const toGraphInput = (data) => {
     .sort(
       (firstNode, secondNode) => secondNode.count - firstNode.count
     );
+};
 
-  return nodes;
+const getGraphNodesIndexMap = (graphNodes) => {
+  return graphNodes.reduce(
+    (acc, graphNode, index) => {
+      acc[graphNode.title] = index;
+
+      return acc;
+    },
+    {});
+};
+
+const toGraphEdges = (data, graphNodes) => {
+  const graphNodesIndexMap = getGraphNodesIndexMap(graphNodes);
+  
+  return data.edges.map(edge => (
+    { 
+      source: graphNodes[graphNodesIndexMap[edge.source]],
+      target: graphNodes[graphNodesIndexMap[edge.target]],
+    }
+  ));
+};
+
+const toGraphInput = (data) => {
+  if (!data || !data.edges || !data.nodes) {
+    return {};
+  }
+  
+  let center = getGraphCenter();
+  let graphNodes = toGraphNodes(data);
+  let graphEdges = toGraphEdges(data, graphNodes);
+
+  console.log(graphEdges, graphNodes);
+  return graphNodes;
 };
 
 export { toGraphInput };
