@@ -79,19 +79,19 @@ const toGraphNodes = (data) => {
   return data.nodes
     .map(
       (name, index) => ({
-        title: name,
-        id: index,
+        id: name,
+        group: 1,
         count: (outEdgesFromNodeCount[name] || 0)
       })
     )
   // .sort((firstNode, secondNode) => secondNode.count - firstNode.count)
-    .map(
-      (graphNode, index) => ({
-        ...graphNode,
-        x: center.x + getGraphNodeX(graphNode, index),
-        y: center.y + getGraphNodeY(graphNode, index)
-      })
-    );
+    // .map(
+    //   (graphNode, index) => ({
+    //     ...graphNode,
+    //     x: center.x + getGraphNodeX(graphNode, index),
+    //     y: center.y + getGraphNodeY(graphNode, index)
+    //   })
+    // );
 };
 
 const getGraphNodesIndexMap = (graphNodes) => {
@@ -106,11 +106,11 @@ const getGraphNodesIndexMap = (graphNodes) => {
 
 const toGraphEdges = (data, graphNodes) => {
   const graphNodesIndexMap = getGraphNodesIndexMap(graphNodes);
-  
+
   return data.edges.map(edge => (
-    { 
-      source: graphNodes[graphNodesIndexMap[edge.source]],
-      target: graphNodes[graphNodesIndexMap[edge.target]],
+    {
+      ...edge,
+      value: 1
     }
   ));
 };
@@ -119,14 +119,14 @@ const toGraphInput = (data) => {
   if (!data || !data.edges || !data.nodes) {
     return {};
   }
-  
+
   let graphNodes = toGraphNodes(data);
   let graphEdges = toGraphEdges(data, graphNodes);
 
   console.log(graphEdges, graphNodes);
   return {
-    edges: graphEdges,
-    nodes: graphNodes
+    nodes: graphNodes,
+    links: graphEdges
   };
 };
 
