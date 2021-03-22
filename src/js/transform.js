@@ -38,12 +38,43 @@ const getGraphCenter = () => {
   };
 };
 
+
+const noOfNodesPerCircle = 4;
+
+const circleRadius = (index) => {
+  const nextCircleRadius = 200;
+
+  return (index / noOfNodesPerCircle) * nextCircleRadius;
+};
+
+const angleOfNode = (index) => {
+  let nodeIndexOnCircle = index % noOfNodesPerCircle;
+  return nodeIndexOnCircle ? ((Math.PI * 2) / (nodeIndexOnCircle)) : 0;
+};
+
+const getGraphNodeX = (graphNode, index) => {
+  if (index === 0) {
+    return 0;
+  } else {
+    return circleRadius(index) * Math.cos(angleOfNode(index));
+  }
+};
+
+const getGraphNodeY = (graphNode, index) => {
+  if (index === 0) {
+    return 0;
+  } else {
+    return circleRadius(index) * Math.sin(angleOfNode(index));
+  }
+};
+
 const toGraphNodes = (data) => {
   let outEdgesFromNodeCount = data.edges.reduce((acc, edge) => {
     acc[edge.source] =  (acc[edge.source] || 0) + 1;
 
     return acc;
   }, {});
+  let center = getGraphCenter();
 
   return data.nodes
     .map(
@@ -53,8 +84,13 @@ const toGraphNodes = (data) => {
         count: (outEdgesFromNodeCount[name] || 0)
       })
     )
-    .sort(
-      (firstNode, secondNode) => secondNode.count - firstNode.count
+  // .sort((firstNode, secondNode) => secondNode.count - firstNode.count)
+    .map(
+      (graphNode, index) => ({
+        ...graphNode,
+        x: center.x + getGraphNodeX(graphNode, index),
+        y: center.y + getGraphNodeY(graphNode, index)
+      })
     );
 };
 
@@ -84,12 +120,14 @@ const toGraphInput = (data) => {
     return {};
   }
   
-  let center = getGraphCenter();
   let graphNodes = toGraphNodes(data);
   let graphEdges = toGraphEdges(data, graphNodes);
 
   console.log(graphEdges, graphNodes);
-  return graphNodes;
+  return {
+    edges: graphEdges,
+    nodes: graphNodes
+  };
 };
 
 export { toGraphInput };
