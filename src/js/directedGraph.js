@@ -41,9 +41,16 @@ const init = (data) => {
     .selectAll("circle")
     .data(nodes)
     .join("circle")
-    .attr("r", 5)
+    .attr("r", d => (d.count || 0) + 5)
     .attr("fill", colour)
     .call(drag(simulation));
+
+  node.append("text")
+    .text(function(d) {
+      return d.id;
+    })
+    .attr('x', 6)
+    .attr('y', 3);
 
   node.append("title")
     .text(d => d.id);
