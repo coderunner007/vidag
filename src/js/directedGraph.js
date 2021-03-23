@@ -4,14 +4,21 @@ import '../css/style.scss';
 const scale = d3.scaleOrdinal(d3.schemeCategory10);
 const colour = d => scale(d.group);
 const height = window.innerHeight;
-const width = window.innerHeight;
+const width = window.innerWidth;
+
+const svgElementSize = () => {
+  const svgEl = document.getElementsByTagName("svg")[0];
+  const height = window.innerHeight;
+  const width = window.innerWidth;
+  svgEl.setAttribute("width", width);
+  svgEl.setAttribute("height", height);
+}
 
 const init = (data) => {
   const links = data.links.map(d => Object.create(d));
   const nodes = data.nodes.map(d => Object.create(d));
-  const svgEl = document.getElementsByTagName("svg")[0];
-  svgEl.setAttribute("width", width);
-  svgEl.setAttribute("height", height);
+
+  svgElementSize();
 
   const simulation = d3.forceSimulation(nodes)
     .force("link", d3.forceLink(links).id(d => d.id))
@@ -54,6 +61,8 @@ const init = (data) => {
   });
 
   // invalidation.then(() => simulation.stop());
+
+  window.addEventListener("resize", svgElementSize);
 
   return svg.node();
 }
