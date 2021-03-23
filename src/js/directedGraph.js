@@ -14,9 +14,17 @@ const svgElementSize = () => {
   svgEl.setAttribute("height", height);
 }
 
+const initSvg = () => {
+  var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  document.body.appendChild(svg);
+  svgElementSize();
+  window.addEventListener("resize", svgElementSize);
+}
+
 const init = (data) => {
   const links = data.links.map(d => Object.create(d));
   const nodes = data.nodes.map(d => Object.create(d));
+  initSvg();
 
   const simulation = d3.forceSimulation(nodes)
     .force("link", d3.forceLink(links).id(d => d.id).distance(200))
@@ -80,7 +88,6 @@ const init = (data) => {
     .style("font-family", "sans-serif")
     .style("font-size", "0.7em")
     .text(function(d) { return d.id; })
-  svgElementSize();
 
 
   simulation.on("tick", () => {
@@ -100,8 +107,6 @@ const init = (data) => {
   });
 
   // invalidation.then(() => simulation.stop());
-
-  window.addEventListener("resize", svgElementSize);
 
   return svg.node();
 }
