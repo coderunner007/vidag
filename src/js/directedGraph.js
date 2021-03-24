@@ -45,6 +45,8 @@ const init = (data) => {
 
   const dims = getDimensions();
   const minDistanceBetweenNodes = 4;
+  const arrowOpacity = 0.1;
+  const opacityDiffFactor = 0.01;
 
   const simulation = d3.forceSimulation(nodes)
     // .force('charge', d3.forceManyBody().strength(5))
@@ -60,7 +62,7 @@ const init = (data) => {
 
   const link = svg.append("g")
     .attr("stroke", "#999")
-    .attr("stroke-opacity", 0.2)
+    .attr("stroke-opacity", arrowOpacity)
     .attr("marker-end", "url(#arrow)")
     .selectAll("line")
     .data(links)
@@ -79,11 +81,14 @@ const init = (data) => {
 
   node.on("mouseover", (d) => {
     link.style('stroke-opacity', function(l) {
-      if (d === l.target) return 1;
-      else                return 0.05;
+      if (d === l.target) {
+        return 1;
+      } else {
+        return arrowOpacity;
+      }
     })
   }).on("mouseout", (d) => {
-    link.style("stroke-opacity", 0.2)
+    link.style("stroke-opacity", arrowOpacity)
   });
 
   svg.append("defs").append("marker")
@@ -91,7 +96,7 @@ const init = (data) => {
     .attr("viewBox", "0 -5 10 10")
     .attr("refX", 20)
     .attr("refY", 0)
-    .attr("opacity", 0.2)
+    .attr("opacity", arrowOpacity)
     .attr("markerWidth", 8)
     .attr("markerHeight", 8)
     .attr("orient", "auto")
@@ -108,7 +113,7 @@ const init = (data) => {
   text.append("text")
     .attr("x", 14)
     .attr("y", ".31em")
-    .attr("opacity", 0.2)
+    .attr("opacity", 0.01)
     .attr("pointer-events", "none")
     .style("font-family", "sans-serif")
     .style("font-size", "0.7em")
