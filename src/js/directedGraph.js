@@ -55,7 +55,8 @@ const init = (data) => {
       return getNodeSize(d) + minDistanceBetweenNodes;
     }))
 
-  const svg = d3.select("svg");
+  const svgT = d3.select("svg");
+  const svg = svgT.append("g");
 
   const link = svg.append("g")
     .attr("stroke", "#999")
@@ -132,19 +133,27 @@ const init = (data) => {
 
   // invalidation.then(() => simulation.stop());
 
-  svg.call(d3.zoom()
-    .extent([[0, 0], [width, height]])
-    .scaleExtent([1, 8])
+  svgT.call(d3.zoom()
+    .scaleExtent([1, 10])
     .on("zoom", zoomed));
 
+  console.log(dims);
   function zoomed(e) {
+    const transformFactor = Math.sqrt(e.transform.k);
     console.log(e.transform);
-    // svg.attr("transform", e.transform);
-    // svg.style("stroke-width", 3 / Math.sqrt(e.transform.k));
-    node.attr("r", d => getNodeSize(d) / Math.sqrt(1 / e.transform.k));
+
+    const newCenter = {
+      x: e.transform.x,
+      y: e.transform.y
+    };
+    const transfromY = e.transform.y;
+    // node.attr("r", d => getNodeSize(d) * transformFactor);
+    svg.attr(
+    "transform",
+      `translate(${newCenter.x}, ${newCenter.y}) scale(${transformFactor})`);
   }
 
-  return svg.node();
+  return svgT.node();
 }
 
 const drag = simulation => {
