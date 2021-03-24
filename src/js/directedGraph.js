@@ -106,17 +106,20 @@ const init = (data) => {
   node.append("title")
     .text(d => d.id);
 
-  const text = svg.append("g").attr("class", "labels").selectAll("g")
+  const text = svg.append("g")
+    .attr("id", "labels")
+    .attr("class", "hide")
+    .selectAll("g")
     .data(nodes)
     .enter().append("g");
 
   text.append("text")
     .attr("x", 14)
     .attr("y", ".31em")
-    .attr("opacity", 0.01)
+    .attr("opacity", 1)
     .attr("pointer-events", "none")
     .style("font-family", "sans-serif")
-    .style("font-size", "0.7em")
+    .style("font-size", "0.25em")
     .text(function(d) { return d.id; })
 
 
@@ -144,18 +147,23 @@ const init = (data) => {
 
   console.log(dims);
   function zoomed(e) {
-    const transformFactor = Math.sqrt(e.transform.k);
-    console.log(e.transform);
+    const { x, y, k } = e.transform;
+    const inverseK = 1 / k;
+    const isZoomEvent = e.sourceEvent.type === "wheel";
+    const showLabelsAfterZoomLevel = 2;
 
-    const newCenter = {
-      x: e.transform.x,
-      y: e.transform.y
-    };
-    const transfromY = e.transform.y;
-    // node.attr("r", d => getNodeSize(d) * transformFactor);
+    if (isZoomEvent) {
+      console.log(e.transform, x, y, k);
+      if (k > showLabelsAfterZoomLevel) {
+        document.getElementById("labels").classList.remove("hide");
+      } else {
+        document.getElementById("labels").classList.add("hide");
+      }
+    }
+
     svg.attr(
-    "transform",
-      `translate(${newCenter.x}, ${newCenter.y}) scale(${transformFactor})`);
+      "transform",
+      `translate(${x}, ${y}) scale(${k})`);
   }
 
   return svgT.node();

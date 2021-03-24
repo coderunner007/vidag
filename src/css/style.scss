@@ -3,9 +3,14 @@ body {
   overflow: hidden;
 }
 
-.labels {
+#labels.hide {
   display: none;
 }
+
+svg {
+  cursor: move;
+}
+
 circle {
   cursor: pointer;
 }
