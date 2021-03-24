@@ -21,15 +21,39 @@ const initSvg = () => {
   window.addEventListener("resize", svgElementSize);
 }
 
+const getDimensions = () => {
+  const height = window.innerHeight;
+  const width = window.innerWidth;
+
+  return {
+    radius: (((Math.min(width, height) / 2) - 100) || 50),
+    center: {
+      x: width / 2,
+      y: height / 2
+    }
+  }
+};
+
+const getNodeSize = (node) => {
+  return (node.count || 0) + 6;
+}
+
 const init = (data) => {
   const links = data.links.map(d => Object.create(d));
   const nodes = data.nodes.map(d => Object.create(d));
   initSvg();
 
+  const dims = getDimensions();
+  const minDistanceBetweenNodes = 4;
+
   const simulation = d3.forceSimulation(nodes)
-    .force("link", d3.forceLink(links).id(d => d.id).distance(200))
-    .force("charge", d3.forceManyBody())
-    .force("center", d3.forceCenter(width / 2, height / 2))
+    // .force('charge', d3.forceManyBody().strength(5))
+    .force('center', d3.forceCenter(width / 2, height / 2))
+    .force('link', d3.forceLink(links).id(d => d.id))
+    .force("r", d3.forceRadial(dims.radius, dims.center.x, dims.center.y).strength(0.04))
+    .force('collision', d3.forceCollide().radius(function(d) {
+      return getNodeSize(d) + minDistanceBetweenNodes;
+    }))
 
   const svg = d3.select("svg");
 
@@ -48,7 +72,7 @@ const init = (data) => {
     .selectAll("circle")
     .data(nodes)
     .enter().append("circle")
-    .attr("r", d => (d.count || 0) + 6)
+    .attr("r", getNodeSize)
     .attr("fill", colour)
     .call(drag(simulation));
 
@@ -107,6 +131,18 @@ const init = (data) => {
   });
 
   // invalidation.then(() => simulation.stop());
+
+  svg.call(d3.zoom()
+    .extent([[0, 0], [width, height]])
+    .scaleExtent([1, 8])
+    .on("zoom", zoomed));
+
+  function zoomed(e) {
+    console.log(e.transform);
+    // svg.attr("transform", e.transform);
+    // svg.style("stroke-width", 3 / Math.sqrt(e.transform.k));
+    node.attr("r", d => getNodeSize(d) / Math.sqrt(1 / e.transform.k));
+  }
 
   return svg.node();
 }
