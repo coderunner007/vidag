@@ -2,7 +2,7 @@ import * as d3 from "d3";
 import '../css/style.scss';
 
 const scale = d3.scaleOrdinal(d3.schemeCategory10);
-const colour = d => scale(d.group);
+const colour = d => scale(getNodeColor(d));
 const height = window.innerHeight;
 const width = window.innerWidth;
 
@@ -35,8 +35,16 @@ const getDimensions = () => {
 };
 
 const getNodeSize = (node) => {
-  return (node.count || 0) + 6;
+  return (node.from || 0) + 6;
 }
+
+const getNodeColor = (node) => {
+  return (node.to || 0);
+}
+
+const getNodeClasses = (node) =>  {
+  return [ ...node.allFacets, node.id].join(" ");
+};
 
 const init = (data) => {
   const links = data.links.map(d => Object.create(d));
@@ -77,19 +85,8 @@ const init = (data) => {
     .enter().append("circle")
     .attr("r", getNodeSize)
     .attr("fill", colour)
+    .attr("class", getNodeClasses)
     .call(drag(simulation));
-
-  node.on("mouseover", (d) => {
-    link.style('stroke-opacity', function(l) {
-      if (d === l.target) {
-        return 1;
-      } else {
-        return arrowOpacity;
-      }
-    })
-  }).on("mouseout", (d) => {
-    link.style("stroke-opacity", arrowOpacity)
-  });
 
   svg.append("defs").append("marker")
     .attr("id", "arrow")
@@ -114,12 +111,13 @@ const init = (data) => {
     .enter().append("g");
 
   text.append("text")
-    .attr("x", 14)
+    .attr("x", 1)
     .attr("y", ".31em")
     .attr("opacity", 1)
     .attr("pointer-events", "none")
     .style("font-family", "sans-serif")
     .style("font-size", "0.25em")
+    .attr("class", getNodeClasses)
     .text(function(d) { return d.id; })
 
 
@@ -145,7 +143,6 @@ const init = (data) => {
     .scaleExtent([1, 10])
     .on("zoom", zoomed));
 
-  console.log(dims);
   function zoomed(e) {
     const { x, y, k } = e.transform;
     const inverseK = 1 / k;
@@ -153,7 +150,6 @@ const init = (data) => {
     const showLabelsAfterZoomLevel = 2;
 
     if (isZoomEvent) {
-      console.log(e.transform, x, y, k);
       if (k > showLabelsAfterZoomLevel) {
         document.getElementById("labels").classList.remove("hide");
       } else {

@@ -1,139 +1,59 @@
-// Functions to transfrom the data
-// to the expected graph input.
-//
-//
-// FROM:
-// {
-//   edges: [
-//     { source: "val", target: "val2" },
-//     { source: "val", target: "val3" },
-//   ],
-//   nodes: [ "val", "val2", "val3" ]
-// };
-//
-// TO:
-// {
-//   edges: [
-//     {title: "val", id: 0, x: xLoc, y: yLoc},
-//     {title: "val2", id: 1, x: xLoc, y: yLoc + 200},
-//     {title: "val3", id: 2, x: xLoc + 200, y: yLoc},
-//   ],
-//   nodes: [
-//     {source: nodes[0], target: nodes[1]},
-//     {source: nodes[0], target: nodes[2]},
-//   ]
-// }
-
-
-const getGraphCenter = () => {
-  var docEl = document.documentElement,
-    bodyEl = document.getElementsByTagName('body')[0];
-
-  var width = window.innerWidth || docEl.clientWidth || bodyEl.clientWidth,
-    height =  window.innerHeight|| docEl.clientHeight|| bodyEl.clientHeight;
-
-  return {
-    x: width/2 - 25,
-    y: height/2 - 25
-  };
-};
-
-
-const noOfNodesPerCircle = 4;
-
-const circleRadius = (index) => {
-  const nextCircleRadius = 200;
-
-  return (index / noOfNodesPerCircle) * nextCircleRadius;
-};
-
-const angleOfNode = (index) => {
-  let nodeIndexOnCircle = index % noOfNodesPerCircle;
-  return nodeIndexOnCircle ? ((Math.PI * 2) / (nodeIndexOnCircle)) : 0;
-};
-
-const getGraphNodeX = (graphNode, index) => {
-  if (index === 0) {
-    return 0;
+const getAllFacets = (node, nodeEdgesMap) => {
+  if (node.from) {
+    return node.toEdges.reduce(
+      (acc, toNode) => ([ ...acc, toNode, ...getAllFacets(nodeEdgesMap[toNode], nodeEdgesMap) ])
+      , []);
   } else {
-    return circleRadius(index) * Math.cos(angleOfNode(index));
+    return [];
   }
 };
 
-const getGraphNodeY = (graphNode, index) => {
-  if (index === 0) {
-    return 0;
-  } else {
-    return circleRadius(index) * Math.sin(angleOfNode(index));
-  }
+const getNodeDetailsMap = (data) => {
+  let nodeEdges = data.edges.reduce((acc, edge) => {
+    acc[edge.source] =  {
+      ...acc[edge.source],
+      name: edge.source,
+      from: ((acc[edge.source] || {}).from || 0) + 1,
+      toEdges: [
+        ...((acc[edge.source] || {}).toEdges || []),
+        edge.target
+      ]
+    };
+    acc[edge.target] =  {
+      ...acc[edge.target],
+      name: edge.target,
+      to: ((acc[edge.target] || {}).from || 0) + 1
+    };
+
+    return acc;
+  }, {});
+
+  return Object.keys(nodeEdges).reduce((acc, key) => {
+    acc[key] = {
+      ...nodeEdges[key],
+      allFacets: [...new Set(getAllFacets(nodeEdges[key], nodeEdges))]
+    }
+
+    return acc;
+  }, {});
 };
 
 const toGraphNodes = (data) => {
-  let outEdgesFromNodeCount = data.edges.reduce((acc, edge) => {
-    acc[edge.source] =  (acc[edge.source] || 0) + 1;
+  let nodeDetailsMap = getNodeDetailsMap(data);
 
-    return acc;
-  }, {});
-  let nodesGroupedBySourceNode = data.edges.reduce((acc, edge) => {
-    acc[edge.source] = acc[edge.source]
-      ? [ ...acc[edge.source], edge.target ]
-      : [edge.target]
+  let x = data.nodes
+    .map(name => ({
+      id: name,
+      from: ((nodeDetailsMap[name] || {}).from || 0),
+      to: ((nodeDetailsMap[name] || {}).to || 0),
+      allFacets: ((nodeDetailsMap[name] || {}).allFacets || [])
+    }));
 
-    return acc;
-  }, {});
-
-  let nodesMap = data.nodes
-    .reduce(
-      (acc, name, index) => {
-        acc[name] = {
-          id: name,
-          group: 20,
-          count: (outEdgesFromNodeCount[name] || 0)
-        };
-
-        return acc;
-      },
-      {}
-    );
-
-  let allNodesSingleGroup = Object.values(nodesMap).sort(
-    (firstNode, secondNode) => secondNode.count - firstNode.count
-  );
-
-  const totalGroups = 15;
-  for (let i = 0; i < totalGroups; i++) {
-    let sourceNode = allNodesSingleGroup[i];
-    nodesMap[sourceNode.id] = {
-      ...nodesMap[sourceNode.id],
-      group: i + 1
-    };
-
-    let allTargetNodesFromThisSource = nodesGroupedBySourceNode[sourceNode.id];
-    for (let i = 0; i < allTargetNodesFromThisSource.length; i++) {
-      let targetNode = allTargetNodesFromThisSource[i];
-      nodesMap[targetNode.id] = {
-        ...nodesMap[targetNode.id],
-        group: i + 1
-      };
-    }
-  }
-
-  return Object.values(nodesMap);
-};
-
-const getGraphNodesIndexMap = (graphNodes) => {
-  return graphNodes.reduce(
-    (acc, graphNode, index) => {
-      acc[graphNode.title] = index;
-
-      return acc;
-    },
-    {});
+  console.log(x.filter(y => y.id === "CustomizationToken"));
+  return x;
 };
 
 const toGraphEdges = (data, graphNodes) => {
-  const graphNodesIndexMap = getGraphNodesIndexMap(graphNodes);
-
   return data.edges.map(edge => (
     {
       ...edge,
