@@ -1,6 +1,8 @@
 import * as d3 from "d3";
 import '../css/style.scss';
 
+"use strict";
+
 const scale = d3.scaleOrdinal(d3.schemeCategory10);
 const colour = d => scale(getNodeColor(d));
 const height = window.innerHeight;
@@ -46,71 +48,63 @@ const getNodeClasses = (node) =>  {
   return [ ...node.allFacets, node.id].join(" ");
 };
 
-const init = (data) => {
-  const links = data.links.map(d => Object.create(d));
-  const nodes = data.nodes.map(d => Object.create(d));
-  initSvg();
+const getRenderConfig = () => ({
+  link: {
+    opacity: d => 1,
+    strokeWidth: d => Math.sqrt(d.value),
+  },
+  node: {
+  },
+  zoomLevel: {
+    showLabelsAfter: 2,
+    max: 10,
+    min: 1
+  }
+});
 
-  const dims = getDimensions();
-  const minDistanceBetweenNodes = 4;
-  const arrowOpacity = 0.1;
-  const opacityDiffFactor = 0.01;
-
-  const simulation = d3.forceSimulation(nodes)
-    // .force('charge', d3.forceManyBody().strength(5))
-    .force('center', d3.forceCenter(width / 2, height / 2))
-    .force('link', d3.forceLink(links).id(d => d.id))
-    .force("r", d3.forceRadial(dims.radius, dims.center.x, dims.center.y).strength(0.04))
-    .force('collision', d3.forceCollide().radius(function(d) {
-      return getNodeSize(d) + minDistanceBetweenNodes;
-    }))
-
-  const svgT = d3.select("svg");
-  const svg = svgT.append("g");
-
-  const link = svg.append("g")
-    .attr("stroke", "#999")
-    .attr("stroke-opacity", arrowOpacity)
-    .attr("marker-end", "url(#arrow)")
-    .selectAll("line")
-    .data(links)
-    .enter().append("line")
-    .attr("stroke-width", d => Math.sqrt(d.value));
-
-  const node = svg.append("g")
-    .attr("stroke", "#fff")
-    .attr("stroke-width", 1.5)
-    .selectAll("circle")
-    .data(nodes)
-    .enter().append("circle")
-    .attr("r", getNodeSize)
-    .attr("fill", colour)
-    .attr("class", getNodeClasses)
-    .call(drag(simulation));
-
-  svg.append("defs").append("marker")
+const getLinks = (parentD3Element, linksData) => {
+  parentD3Element.append("defs").append("marker")
     .attr("id", "arrow")
     .attr("viewBox", "0 -5 10 10")
     .attr("refX", 20)
     .attr("refY", 0)
-    .attr("opacity", arrowOpacity)
+    .attr("opacity", getRenderConfig().link.opacity)
     .attr("markerWidth", 8)
     .attr("markerHeight", 8)
     .attr("orient", "auto")
     .append("svg:path")
     .attr("d", "M0,-5L10,0L0,5");
 
-  node.append("title")
-    .text(d => d.id);
+  return parentD3Element.append("g")
+    .attr("stroke", "#999")
+    .attr("stroke-opacity", getRenderConfig().link.opacity)
+    .attr("marker-end", "url(#arrow)")
+    .selectAll("line")
+    .data(linksData)
+    .enter().append("line")
+    .attr("stroke-width", getRenderConfig().link.strokeWidth);
+};
 
-  const text = svg.append("g")
+const getNodes = (parentD3Element, nodesData) => {
+ return parentD3Element.append("g")
+    .attr("stroke", "#fff")
+    .attr("stroke-width", 1.5)
+    .selectAll("circle")
+    .data(nodesData)
+    .enter().append("circle")
+    .attr("r", getNodeSize)
+    .attr("fill", colour)
+    .attr("class", getNodeClasses);
+};
+
+const getLabels = (parentD3Element, nodesData) => {
+  return parentD3Element.append("g")
     .attr("id", "labels")
     .attr("class", "hide")
     .selectAll("g")
-    .data(nodes)
-    .enter().append("g");
-
-  text.append("text")
+    .data(nodesData)
+    .enter().append("g")
+    .append("text")
     .attr("x", 1)
     .attr("y", ".31em")
     .attr("opacity", 1)
@@ -119,7 +113,49 @@ const init = (data) => {
     .style("font-size", "0.25em")
     .attr("class", getNodeClasses)
     .text(function(d) { return d.id; })
+};
 
+const onZoomOrPan = (parentD3Element) => (event) => {
+  const { x, y, k } = event.transform;
+  const inverseK = 1 / k;
+  const isZoomEvent = event.sourceEvent.type === "wheel";
+
+  if (isZoomEvent) {
+    if (k > getRenderConfig().zoomLevel.showLabelsAfter) {
+      document.getElementById("labels").classList.remove("hide");
+    } else {
+      document.getElementById("labels").classList.add("hide");
+    }
+  }
+
+  parentD3Element.attr(
+    "transform",
+    `translate(${x}, ${y}) scale(${k})`);
+};
+
+const init = (data) => {
+  const links = data.links.map(d => Object.create(d));
+  const nodes = data.nodes.map(d => Object.create(d));
+  initSvg();
+
+  const dims = getDimensions();
+  const minDistanceBetweenNodes = 4;
+
+  const simulation = d3.forceSimulation(nodes)
+    // .force('charge', d3.forceManyBody().strength(5))
+    .force('center', d3.forceCenter(dims.center.x, dims.center.y))
+    .force('link', d3.forceLink(links).id(d => d.id))
+    .force("r", d3.forceRadial(dims.radius, dims.center.x, dims.center.y).strength(0.04))
+    .force('collision', d3.forceCollide().radius(function(d) {
+      return getNodeSize(d) + minDistanceBetweenNodes;
+    }))
+
+  const svg = d3.select("svg");
+  const parentD3Element = svg.append("g");
+
+  const link = getLinks(parentD3Element, links);
+  const node = getNodes(parentD3Element, nodes).call(drag(simulation));
+  const text = getLabels(parentD3Element, nodes);
 
   simulation.on("tick", () => {
     link
@@ -137,32 +173,11 @@ const init = (data) => {
         function(d) { return "translate(" + d.x + "," + d.y + ")"; })
   });
 
-  // invalidation.then(() => simulation.stop());
+  svg.call(d3.zoom()
+    .scaleExtent([getRenderConfig().zoomLevel.min, getRenderConfig().zoomLevel.max])
+    .on("zoom", onZoomOrPan(parentD3Element)));
 
-  svgT.call(d3.zoom()
-    .scaleExtent([1, 10])
-    .on("zoom", zoomed));
-
-  function zoomed(e) {
-    const { x, y, k } = e.transform;
-    const inverseK = 1 / k;
-    const isZoomEvent = e.sourceEvent.type === "wheel";
-    const showLabelsAfterZoomLevel = 2;
-
-    if (isZoomEvent) {
-      if (k > showLabelsAfterZoomLevel) {
-        document.getElementById("labels").classList.remove("hide");
-      } else {
-        document.getElementById("labels").classList.add("hide");
-      }
-    }
-
-    svg.attr(
-      "transform",
-      `translate(${x}, ${y}) scale(${k})`);
-  }
-
-  return svgT.node();
+  return svg.node();
 }
 
 const drag = simulation => {
